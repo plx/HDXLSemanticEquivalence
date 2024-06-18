@@ -1,7 +1,3 @@
-//
-//  SemanticEquivalenceClassIdentifierConvertible.swift
-//
-
 import Foundation
 
 // -------------------------------------------------------------------------- //

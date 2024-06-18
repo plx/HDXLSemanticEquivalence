@@ -1,9 +1,5 @@
-//
-//  SemanticEquivalenceClass.swift
-//
-
 import Foundation
-import HDXLCommonUtilities
+//import HDXLCommonUtilities
 import HDXLAlgebraicUtilities
 
 // -------------------------------------------------------------------------- //
@@ -40,18 +36,14 @@ public struct SemanticEquivalenceClass<Element:SemanticEquivalenceClassIdentifie
   /// The *reference element* will always be equivalence class's most-favored element.
   @inlinable
   public var referenceElement: Element {
-    get {
-      return self._referenceElement
-    }
+    _referenceElement
   }
   
   /// The *equivalent elements* will always consist of "all elements *other than* the `referenceElement`,
   /// arranged from least-to-most favored.
   @inlinable
   public var equivalentElements: [Element] {
-    get {
-      return self._equivalentElements
-    }
+    _equivalentElements
   }
   
   // ------------------------------------------------------------------------ //
@@ -61,7 +53,8 @@ public struct SemanticEquivalenceClass<Element:SemanticEquivalenceClassIdentifie
   /// Construct an equivalence class from an initial reference element.
   @inlinable
   public init(
-    referenceElement: Element) {
+    referenceElement: Element
+  ) {
     // /////////////////////////////////////////////////////////////////////////
     defer { pedantic_assert(self.isValid) }
     // /////////////////////////////////////////////////////////////////////////
@@ -75,65 +68,50 @@ public struct SemanticEquivalenceClass<Element:SemanticEquivalenceClassIdentifie
 // MARK: SemanticEquivalenceClass - Support
 // -------------------------------------------------------------------------- //
 
-public extension SemanticEquivalenceClass {
+extension SemanticEquivalenceClass {
   
   /// The (common) `SemanticEquivalenceClassIdentifier` for this equivalence class.
   @inlinable
-  var semanticEquivalenceClassIdentifier: Identifier {
-    get {
-      return self.referenceElement.semanticEquivalenceClassIdentifier
-    }
+  public var semanticEquivalenceClassIdentifier: Identifier {
+    referenceElement.semanticEquivalenceClassIdentifier
   }
   
   /// Count of all elements within `self` (e.g. count *including* the reference element *and* the equivalent elements).
   @inlinable
-  var elementCount: Int {
-    get {
-      return 1 + self.equivalentElementCount
-    }
+  public var elementCount: Int {
+    1 + equivalentElementCount
   }
   
   /// Count of the *equivalent elements* (e.g. count *without* the reference element).
   @inlinable
-  var equivalentElementCount: Int {
-    get {
-      return self.equivalentElements.count
-    }
+  public var equivalentElementCount: Int {
+    equivalentElements.count
   }
   
   /// `true` iff this equivalence class contains more than just the reference element.
   @inlinable
-  var containsMultipleRepresentations: Bool {
-    get {
-      return !self.equivalentElements.isEmpty
-    }
+  public var containsMultipleRepresentations: Bool {
+    !equivalentElements.isEmpty
   }
   
   /// `true` iff this equivalence class contains `element`.
   @inlinable
-  func contains(element: Element) -> Bool {
-    guard self.referenceElement != element else {
-      return true
-    }
-    return self.equivalentElements.contains(
-      element
-    )
+  public func contains(element: Element) -> Bool {
+    referenceElement == element
+    ||
+    equivalentElements.contains(element)
   }
   
   /// Returns the least-favored element within `self`.
   @inlinable
-  var leastFavoredElement: Element {
-    get {
-      return self.equivalentElements.first ?? self.referenceElement
-    }
+  public var leastFavoredElement: Element {
+    equivalentElements.first ?? referenceElement
   }
   
   /// Returns the most-favored element within `self`.
   @inlinable
-  var mostFavoredElement: Element {
-    get {
-      return self.referenceElement
-    }
+  public var mostFavoredElement: Element {
+    referenceElement
   }
   
   /// `true` iff the members of this equivalence class have semantics distinct
@@ -144,34 +122,39 @@ public extension SemanticEquivalenceClass {
   /// semantics of the reference elements suffices for comparing the semantics of
   /// the equivalence classes.
   @inlinable
-  func hasDistinctSemantics(from equivalenceClass: SemanticEquivalenceClass<Element>) -> Bool {
+  public func hasDistinctSemantics(
+    from equivalenceClass: SemanticEquivalenceClass<Element>
+  ) -> Bool {
     // /////////////////////////////////////////////////////////////////////////
     pedantic_assert(equivalenceClass.isValid)
-    pedantic_assert(self.isValid)
+    pedantic_assert(isValid)
     // /////////////////////////////////////////////////////////////////////////
-    return !self.referenceElement.hasEquivalentSemantics(to: equivalenceClass.referenceElement)
+    return !referenceElement.hasEquivalentSemantics(to: equivalenceClass.referenceElement)
   }
   
   /// `true` iff there is no elementwise-intersection between `self` and `equivalenceClass`.
   ///
   /// - note: The implementation expects the invariants to be upheld, and won't work if they aren't.
   @inlinable
-  func isDisjoint(with equivalenceClass: SemanticEquivalenceClass<Element>) -> Bool {
+  public func isDisjoint(
+    with equivalenceClass: SemanticEquivalenceClass<Element>
+  ) -> Bool {
     // /////////////////////////////////////////////////////////////////////////
     pedantic_assert(equivalenceClass.isValid)
-    pedantic_assert(self.isValid)
+    pedantic_assert(isValid)
     // /////////////////////////////////////////////////////////////////////////
     // first pre-flight sanity checks:
     guard
-      self.semanticEquivalenceClassIdentifier == equivalenceClass.semanticEquivalenceClassIdentifier,
-      self.referenceElement.hasEquivalentSemantics(to: equivalenceClass.referenceElement) else {
-        return true
+      semanticEquivalenceClassIdentifier == equivalenceClass.semanticEquivalenceClassIdentifier,
+      referenceElement.hasEquivalentSemantics(to: equivalenceClass.referenceElement) 
+    else {
+      return true
     }
     // identical reference elements mean we're done:
-    guard self.referenceElement != equivalenceClass.referenceElement else {
-        return false
+    guard referenceElement != equivalenceClass.referenceElement else {
+      return false
     }
-    switch (self.equivalentElements.isEmpty,equivalenceClass.equivalentElements.isEmpty) {
+    switch (equivalentElements.isEmpty, equivalenceClass.equivalentElements.isEmpty) {
     case (true,true):
       // no alternates, distinct semantics for reference elements, so we're done
       return true
@@ -180,7 +163,7 @@ public extension SemanticEquivalenceClass {
       return !self.equivalentElements.contains(equivalenceClass.referenceElement)
     case (true,false):
       // other has alternates, self doesn't, one last check:
-      return !equivalenceClass.equivalentElements.contains(self.referenceElement)
+      return !equivalenceClass.equivalentElements.contains(referenceElement)
     case (false,false):
       // both have alternates, so we have work to do.
       // First, keeping our equivalents arranged ascending from least-to-most
@@ -193,19 +176,25 @@ public extension SemanticEquivalenceClass {
       // see that `6 < 10`--"most-favored in one is less-favored than least-favored
       // in the other"--and determine we *must* be disjoint.
       guard
-        !self.leastFavoredElement.shouldBeFavored(over: equivalenceClass.mostFavoredElement),
-        !equivalenceClass.leastFavoredElement.shouldBeFavored(over: self.mostFavoredElement) else {
-          return true
+        !leastFavoredElement.shouldBeFavored(
+          over: equivalenceClass.mostFavoredElement
+        ),
+        !equivalenceClass.leastFavoredElement.shouldBeFavored(
+          over: mostFavoredElement
+        )
+      else {
+        return true
       }
       // with that out of the way, we check disjointness; first check is
       // for disjointness of the reference element:
       guard
-        !self.equivalentElements.contains(equivalenceClass.referenceElement),
-        !equivalenceClass.equivalentElements.contains(self.referenceElement) else {
-          return false
+        !equivalentElements.contains(equivalenceClass.referenceElement),
+        !equivalenceClass.equivalentElements.contains(referenceElement)
+      else {
+        return false
       }
       // then we go item-by-item from `smallerClass` to `largerClass`:
-      let (smallerClass,largerClass) = projectedAscendingArrangement(self,equivalenceClass) {
+      let (smallerClass,largerClass) = projectedAscendingArrangement(self, equivalenceClass) {
         $0.equivalentElementCount
       }
       for candidate in smallerClass.equivalentElements {
@@ -246,7 +235,7 @@ public extension SemanticEquivalenceClass {
   ///
   @inlinable
   internal func shouldInclude(element: Element) -> Bool {
-    return self.referenceElement.hasEquivalentSemantics(to: element)
+    referenceElement.hasEquivalentSemantics(to: element)
   }
   
   /// Updates `self` by incorporating `element`.
@@ -257,37 +246,37 @@ public extension SemanticEquivalenceClass {
   internal mutating func incorporate(element: Element) {
     precondition(self.referenceElement.hasEquivalentSemantics(to: element))
     // /////////////////////////////////////////////////////////////////////////
-    pedantic_assert(self.isValid)
-    defer { pedantic_assert(self.isValid) }
+    pedantic_assert(isValid)
+    defer { pedantic_assert(isValid) }
     // /////////////////////////////////////////////////////////////////////////
-    guard !self.contains(element: element) else {
+    guard !contains(element: element) else {
       return
     }
-    switch element.shouldBeFavored(over: self.referenceElement) {
+    switch element.shouldBeFavored(over: referenceElement) {
     case true:
-      self._equivalentElements.append(self.referenceElement)
-      self._referenceElement = element
+      _equivalentElements.append(referenceElement)
+      _referenceElement = element
     case false:
-      if let firstDisfavoredIndex = self.equivalentElements.firstIndex(where: { !element.shouldBeFavored(over: $0)}) {
-        self._equivalentElements.insert(
+      if let firstDisfavoredIndex = equivalentElements.firstIndex(where: { !element.shouldBeFavored(over: $0)}) {
+        _equivalentElements.insert(
           element,
           at: firstDisfavoredIndex
         )
       } else {
-        self._equivalentElements.append(element)
+        _equivalentElements.append(element)
       }
     }
   }
   
   /// "Safely incorporate" an `element` that may or may not actually-belong in `self`.
   @inlinable
-  mutating func weaklyIncorporate(element: Element) {
+  public mutating func weaklyIncorporate(element: Element) {
     // /////////////////////////////////////////////////////////////////////////
-    pedantic_assert(self.isValid)
-    defer { pedantic_assert(self.isValid) }
+    pedantic_assert(isValid)
+    defer { pedantic_assert(isValid) }
     // /////////////////////////////////////////////////////////////////////////
-    if self.shouldInclude(element: element) {
-      self.incorporate(element:
+    if shouldInclude(element: element) {
+      incorporate(element:
         element
       )
     }
@@ -295,19 +284,16 @@ public extension SemanticEquivalenceClass {
   
   /// "Safely incorporate" `elements` that may or may not actually-belong in `self`.
   @inlinable
-  mutating func weaklyIncorporate<S>(elements: S)
-    where
-    S:Sequence,
-    S.Element == Element {
-      // ///////////////////////////////////////////////////////////////////////
-      pedantic_assert(self.isValid)
-      defer { pedantic_assert(self.isValid) }
-      // ///////////////////////////////////////////////////////////////////////
-      for element in elements {
-        self.weaklyIncorporate(
-          element: element
-        )
-      }
+  public mutating func weaklyIncorporate(elements: some Sequence<Element>) {
+    // ///////////////////////////////////////////////////////////////////////
+    pedantic_assert(isValid)
+    defer { pedantic_assert(isValid) }
+    // ///////////////////////////////////////////////////////////////////////
+    for element in elements {
+      weaklyIncorporate(
+        element: element
+      )
+    }
   }
 
 }
@@ -316,18 +302,19 @@ public extension SemanticEquivalenceClass {
 // MARK: SemanticEquivalenceClass - Support - Objects
 // -------------------------------------------------------------------------- //
 
-internal extension SemanticEquivalenceClass where Element:AnyObject {
+extension SemanticEquivalenceClass where Element:AnyObject {
   
   /// Returns `true` iff `self` is disjoint with the *objects* contained in `objects`.
   ///
   /// - note: Special case for objects; motivated for use with `CoreData`.
   ///
   @inlinable
-  func isDisjoint(with objects: ObjectSet<Element>) -> Bool {
+  internal func isDisjoint(with objects: ObjectSet<Element>) -> Bool {
     guard
-      !objects.contains(self.referenceElement),
-      objects.isDisjoint(with: self.equivalentElements) else {
-        return false
+      !objects.contains(referenceElement),
+      objects.isDisjoint(with: equivalentElements)
+    else {
+      return false
     }
     return true
   }
@@ -338,40 +325,39 @@ internal extension SemanticEquivalenceClass where Element:AnyObject {
 // MARK: SemanticEquivalenceClass - Validatable
 // -------------------------------------------------------------------------- //
 
-extension SemanticEquivalenceClass : Validatable {
+extension SemanticEquivalenceClass {
   
   @inlinable
   public var isValid: Bool {
-    get {
-      guard
-        isValidOrIndifferent(self.referenceElement),
-        self.equivalentElements.allElementsAreValidOrIndifferent,
-        !self.equivalentElements.contains(self.referenceElement),
-        self.equivalentElements.allSatisfy({self.referenceElement.semanticEquivalenceClassIdentifier == $0.semanticEquivalenceClassIdentifier}),
-        self.equivalentElements.allSatisfy({self.referenceElement.hasEquivalentSemantics(to: $0)}),
-        self.equivalentElements.allSatisfy({self.referenceElement.shouldBeFavored(over: $0)}),
-        self.hasMaintainedPreferenceOrdering() else {
-          return false
-      }
-      return true
+    guard
+      isValidOrIndifferent(referenceElement),
+      equivalentElements.allElementsAreValidOrIndifferent,
+      !equivalentElements.contains(referenceElement),
+      equivalentElements.allSatisfy({referenceElement.semanticEquivalenceClassIdentifier == $0.semanticEquivalenceClassIdentifier}),
+      equivalentElements.allSatisfy({referenceElement.hasEquivalentSemantics(to: $0)}),
+      equivalentElements.allSatisfy({referenceElement.shouldBeFavored(over: $0)}),
+      hasMaintainedPreferenceOrdering() 
+    else {
+      return false
     }
+    return true
   }
   
   /// This is an O(n^2) algorithm *but that's ok* b/c (a) we only use it (much)
   /// in heavy debug builds and (b) we want to find the errors it catches!
   @inlinable
   internal func hasMaintainedPreferenceOrdering() -> Bool {
-    guard self.equivalentElements.count >= 2 else {
+    guard equivalentElements.count >= 2 else {
       return true
     }
     // note: if you trust the implementation of the favorability comparison,
     // then we can do `for (lessFavored,moreFavored) in self.equivalentElements.adjacentPairs()`,
     // but for now I'm doing *all* comparisons to help shake out potential favorability bugs.
-    for upperIndex in 1..<self.equivalentElements.count {
+    for upperIndex in 1..<equivalentElements.count {
       // yeah, yeah, enumerated().dropFirst() could work but keep it easy:
-      let favoredElement = self.equivalentElements[upperIndex]
+      let favoredElement = equivalentElements[upperIndex]
       for lowerIndex in 0..<upperIndex {
-        let unfavoredElement = self.equivalentElements[lowerIndex]
+        let unfavoredElement = equivalentElements[lowerIndex]
         guard favoredElement.shouldBeFavored(over: unfavoredElement) else {
           return false
         }
@@ -382,121 +368,70 @@ extension SemanticEquivalenceClass : Validatable {
   
 }
 
+// -------------------------------------------------------------------------- //
+// MARK: - Synthesized Conformances
+// -------------------------------------------------------------------------- //
+
+extension SemanticEquivalenceClass : Sendable where Element: Sendable { }
+extension SemanticEquivalenceClass : Equatable { }
+extension SemanticEquivalenceClass : Hashable where Element: Hashable { }
+extension SemanticEquivalenceClass : Encodable where Element: Encodable { }
+extension SemanticEquivalenceClass : Decodable where Element: Decodable { }
 
 // -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceClass - Equatable
+// MARK: - Identifiable
 // -------------------------------------------------------------------------- //
 
-extension SemanticEquivalenceClass : Equatable {
+extension SemanticEquivalenceClass : Identifiable {
+  public typealias ID = Identifier
   
   @inlinable
-  public static func ==(
-    lhs: SemanticEquivalenceClass<Element>,
-    rhs: SemanticEquivalenceClass<Element>) -> Bool {
-    // /////////////////////////////////////////////////////////////////////////
-    pedantic_assert(lhs.isValid)
-    pedantic_assert(rhs.isValid)
-    // /////////////////////////////////////////////////////////////////////////
-    // note: below *won't work* unless the invariants are maintained correctly!
-    guard
-      lhs.referenceElement == rhs.referenceElement,
-      lhs.equivalentElements == rhs.equivalentElements else {
-        return false
-    }
-    return true
-  }
-
-  @inlinable
-  public static func !=(
-    lhs: SemanticEquivalenceClass<Element>,
-    rhs: SemanticEquivalenceClass<Element>) -> Bool {
-    // /////////////////////////////////////////////////////////////////////////
-    pedantic_assert(lhs.isValid)
-    pedantic_assert(rhs.isValid)
-    // /////////////////////////////////////////////////////////////////////////
-    // note: below *won't work* unless the invariants are maintained correctly!
-    guard
-      lhs.referenceElement == rhs.referenceElement,
-      lhs.equivalentElements == rhs.equivalentElements else {
-        return true
-    }
-    return false
-  }
-
+  public var id: ID { referenceElement.semanticEquivalenceClassIdentifier }
 }
 
 // -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceClass - Hashable
-// -------------------------------------------------------------------------- //
-
-extension SemanticEquivalenceClass : Hashable {
-  
-  @inlinable
-  public func hash(into hasher: inout Hasher) {
-    self.semanticEquivalenceClassIdentifier.hash(into: &hasher)
-  }
-  
-}
-
-// -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceClass - CustomStringConvertible
+// MARK: - CustomStringConvertible
 // -------------------------------------------------------------------------- //
 
 extension SemanticEquivalenceClass : CustomStringConvertible {
   
   @inlinable
   public var description: String {
-    get {
-      return "class `\(String(describing: self.semanticEquivalenceClassIdentifier))` w/reference \(String(describing: self.referenceElement)) and \(self.equivalentElements.count) equivalent representations"
-    }
+    "class `\(String(describing: semanticEquivalenceClassIdentifier))` w/reference \(String(describing: referenceElement)) and \(equivalentElements.count) equivalent representations"
   }
   
 }
 
 // -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceClass - CustomDebugStringConvertible
+// MARK: - CustomDebugStringConvertible
 // -------------------------------------------------------------------------- //
 
 extension SemanticEquivalenceClass : CustomDebugStringConvertible {
   
   @inlinable
   public var debugDescription: String {
-    get {
-      return "SemanticEquivalenceClass<\(String(reflecting: Element.self))>(referenceElement: \(String(reflecting: self.referenceElement)), equivalentElements: \(self.equivalentElements.arrayLikeElementDebugDescriptions()))"
-    }
+    "SemanticEquivalenceClass<\(String(reflecting: Element.self))>(referenceElement: \(String(reflecting: referenceElement)), equivalentElements: \(equivalentElements.arrayLikeElementDebugDescriptions()))"
   }
   
 }
 
 // -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceClass - Codable
+// MARK: - Element-Exposure
 // -------------------------------------------------------------------------- //
 
-extension SemanticEquivalenceClass : Codable where Element:Codable {
+extension SemanticEquivalenceClass {
   
-  // synthesized ok
-  
-}
-
-// -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceClass - Element-Exposure
-// -------------------------------------------------------------------------- //
-
-public extension SemanticEquivalenceClass {
-  
-  typealias Elements = Chain2Collection<[Element],CollectionOfOne<Element>>
+  public typealias Elements = Chain2Collection<[Element],CollectionOfOne<Element>>
   
   /// Returns all elements in `self`, arranged least-to-most favored.
   ///
   /// - todo: use `some Collection` once I can suitably constrain with a `where` clause.
   @inlinable
-  var equivalenceClassElements: Elements {
-    get {
-      return Chain2Collection<[Element],CollectionOfOne<Element>>(
-        self.equivalentElements,
-        CollectionOfOne<Element>(self.referenceElement)
-      )
-    }
+  public var equivalenceClassElements: Elements {
+    Chain2Collection<[Element],CollectionOfOne<Element>>(
+      equivalentElements,
+      CollectionOfOne<Element>(referenceElement)
+    )
   }
    
 }

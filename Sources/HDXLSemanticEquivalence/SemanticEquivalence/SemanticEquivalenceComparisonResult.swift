@@ -1,7 +1,3 @@
-//
-//  SemanticEquivalenceComparison.swift
-//
-
 import Foundation
 
 // -------------------------------------------------------------------------- //
@@ -40,150 +36,101 @@ public enum SemanticEquivalenceComparisonResult : Int {
 // MARK: SemanticEquivalenceComparisonResult - Support
 // -------------------------------------------------------------------------- //
 
-public extension SemanticEquivalenceComparisonResult {
+extension SemanticEquivalenceComparisonResult {
 
   /// `true` iff `self` implies the compared values are semantically-distinct.
   @inlinable
-  var impliesDistinctness: Bool {
-    get {
-      switch self {
-      case .distinct:
-        return true
-      case .identical:
-        return false
-      case .equivalentPreferLHS:
-        return false
-      case .equivalentPreferRHS:
-        return false
-      }
+  public var impliesDistinctness: Bool {
+    switch self {
+    case .distinct:
+      true
+    case .identical:
+      false
+    case .equivalentPreferLHS:
+      false
+    case .equivalentPreferRHS:
+      false
     }
   }
 
   /// `true` iff `self` implies the compared types are semantically-equivalent.
   @inlinable
-  var impliesEquivalence: Bool {
-    get {
-      switch self {
-      case .distinct:
-        return false
-      case .identical:
-        return true
-      case .equivalentPreferLHS:
-        return true
-      case .equivalentPreferRHS:
-        return true
-      }
+  public var impliesEquivalence: Bool {
+    switch self {
+    case .distinct:
+      false
+    case .identical:
+      true
+    case .equivalentPreferLHS:
+      true
+    case .equivalentPreferRHS:
+      true
     }
   }
 
 }
 
 // -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceComparisonResult - Equatable
+// MARK: - Synthesized Conformances
 // -------------------------------------------------------------------------- //
 
-extension SemanticEquivalenceComparisonResult : Equatable {
+extension SemanticEquivalenceComparisonResult : Sendable { }
+extension SemanticEquivalenceComparisonResult : Equatable { }
+extension SemanticEquivalenceComparisonResult : Hashable { }
+extension SemanticEquivalenceComparisonResult : Codable { }
+extension SemanticEquivalenceComparisonResult : CaseIterable { }
+
+// -------------------------------------------------------------------------- //
+// MARK: - Identifiable
+// -------------------------------------------------------------------------- //
+
+extension SemanticEquivalenceComparisonResult : Identifiable {
+  public typealias ID = Self
   
   @inlinable
-  public static func ==(
-    lhs: SemanticEquivalenceComparisonResult,
-    rhs: SemanticEquivalenceComparisonResult) -> Bool {
-    return lhs.rawValue == rhs.rawValue
-  }
-
-  @inlinable
-  public static func !=(
-    lhs: SemanticEquivalenceComparisonResult,
-    rhs: SemanticEquivalenceComparisonResult) -> Bool {
-    return lhs.rawValue == rhs.rawValue
-  }
-
+  public var id: ID { self }
 }
 
 // -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceComparisonResult - Hashable
-// -------------------------------------------------------------------------- //
-
-extension SemanticEquivalenceComparisonResult : Hashable {
-  
-  @inlinable
-  public func hash(into hasher: inout Hasher) {
-    self.rawValue.hash(into: &hasher)
-  }
-  
-}
-
-// -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceComparisonResult - CustomStringConvertible
+// MARK: - CustomStringConvertible
 // -------------------------------------------------------------------------- //
 
 extension SemanticEquivalenceComparisonResult : CustomStringConvertible {
 
   @inlinable
   public var description: String {
-    get {
-      switch self {
-      case .distinct:
-        return ".distinct"
-      case .identical:
-        return ".identical"
-      case .equivalentPreferLHS:
-        return ".equivalentPreferLHS"
-      case .equivalentPreferRHS:
-        return ".equivalentPreferRHS"
-      }
+    switch self {
+    case .distinct:
+      ".distinct"
+    case .identical:
+      ".identical"
+    case .equivalentPreferLHS:
+      ".equivalentPreferLHS"
+    case .equivalentPreferRHS:
+      ".equivalentPreferRHS"
     }
   }
 
 }
 
 // -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceComparisonResult - CustomDebugStringConvertible
+// MARK: - CustomDebugStringConvertible
 // -------------------------------------------------------------------------- //
 
 extension SemanticEquivalenceComparisonResult : CustomDebugStringConvertible {
   
   @inlinable
   public var debugDescription: String {
-    get {
-      switch self {
-      case .distinct:
-        return "SemanticEquivalenceComparisonResult.distinct"
-      case .identical:
-        return "SemanticEquivalenceComparisonResult.identical"
-      case .equivalentPreferLHS:
-        return "SemanticEquivalenceComparisonResult.equivalentPreferLHS"
-      case .equivalentPreferRHS:
-        return "SemanticEquivalenceComparisonResult.equivalentPreferRHS"
-      }
+    switch self {
+    case .distinct:
+      "SemanticEquivalenceComparisonResult.distinct"
+    case .identical:
+      "SemanticEquivalenceComparisonResult.identical"
+    case .equivalentPreferLHS:
+      "SemanticEquivalenceComparisonResult.equivalentPreferLHS"
+    case .equivalentPreferRHS:
+      "SemanticEquivalenceComparisonResult.equivalentPreferRHS"
     }
   }
-  
-}
-
-// -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceComparisonResult - Codable
-// -------------------------------------------------------------------------- //
-
-extension SemanticEquivalenceComparisonResult : Codable {
-  
-  // synthesized ok
-  
-}
-
-// -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceComparisonResult - CaseIterable
-// -------------------------------------------------------------------------- //
-
-extension SemanticEquivalenceComparisonResult : CaseIterable {
-  
-  public typealias AllCases = [SemanticEquivalenceComparisonResult]
-  
-  public static let allCases: AllCases = [
-    .distinct,
-    .identical,
-    .equivalentPreferLHS,
-    .equivalentPreferRHS
-  ]
   
 }

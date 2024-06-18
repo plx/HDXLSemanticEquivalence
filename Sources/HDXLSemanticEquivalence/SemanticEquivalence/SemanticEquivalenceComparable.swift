@@ -1,7 +1,3 @@
-//
-//  SemanticEquivalenceComparable.swift
-//
-
 import Foundation
 
 // -------------------------------------------------------------------------- //
@@ -211,33 +207,35 @@ public protocol SemanticEquivalenceComparable : Equatable {
 // MARK: SemanticEquivalenceComparable - Conveniences
 // -------------------------------------------------------------------------- //
 
-public extension SemanticEquivalenceComparable {
+extension SemanticEquivalenceComparable {
   
   @inlinable
-  func semanticEquivalenceRelationship(with other: Self) -> SemanticEquivalenceRelationship {
+  public func semanticEquivalenceRelationship(
+    with other: Self
+  ) -> SemanticEquivalenceRelationship {
     switch self <~> other {
     case .distinct:
-      return .distinct
+      .distinct
     case .identical:
-      return .identical
+      .identical
     case .equivalentPreferLHS:
-      return .equivalent
+      .equivalent
     case .equivalentPreferRHS:
-      return .equivalent
+      .equivalent
     }
   }
   
   @inlinable
-  func hasIdenticalSemantics(to other: Self) -> Bool {
+  public func hasIdenticalSemantics(to other: Self) -> Bool {
     switch self <~> other {
     case .distinct:
-      return false
+      false
     case .identical:
-      return true
+      true
     case .equivalentPreferLHS:
-      return false
+      false
     case .equivalentPreferRHS:
-      return false
+      false
     }
   }
   
@@ -246,22 +244,22 @@ public extension SemanticEquivalenceComparable {
   /// true in cases for which `self != other`.
   ///
   @inlinable
-  func hasEquivalentSemantics(to other: Self) -> Bool {
-    return (self <~> other).impliesEquivalence
+  public func hasEquivalentSemantics(to other: Self) -> Bool {
+    (self <~> other).impliesEquivalence
   }
   
   /// Convenience to see if `self` is to be favored over `other`.
   @inlinable
-  func shouldBeFavored(over other: Self) -> Bool {
+  public func shouldBeFavored(over other: Self) -> Bool {
     switch self <~> other {
     case .distinct:
-      return false
+      false
     case .identical:
-      return false
+      false
     case .equivalentPreferLHS:
-      return true
+      true
     case .equivalentPreferRHS:
-      return false
+      false
     }
   }
   

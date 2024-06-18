@@ -1,4 +1,4 @@
-// swift-tools-version:5.1
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,10 +6,10 @@ import PackageDescription
 let package = Package(
   name: "HDXLSemanticEquivalence",
   platforms: [
-    SupportedPlatform.iOS(.v13),
-    SupportedPlatform.macOS(.v10_15),
-    SupportedPlatform.tvOS(.v13),
-    SupportedPlatform.watchOS(.v6)
+    SupportedPlatform.iOS(.v18),
+    SupportedPlatform.macOS(.v15),
+    SupportedPlatform.tvOS(.v18),
+    SupportedPlatform.watchOS(.v11)
   ],
   products: [
     // Products define the executables and libraries produced by a package, and make them visible to other packages.
@@ -48,6 +48,9 @@ let package = Package(
         "HDXLAlgebraicUtilities",
         "HDXLTestingUtilities"
     ])
+  ],
+  swiftLanguageVersions: [
+    .v6
   ]
 )
 

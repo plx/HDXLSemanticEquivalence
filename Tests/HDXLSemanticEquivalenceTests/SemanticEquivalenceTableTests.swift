@@ -1,10 +1,6 @@
-//
-//  SemanticEquivalenceTableTests.swift
-//
-
 import Foundation
 import XCTest
-import HDXLCommonUtilities
+//import HDXLCommonUtilities
 import HDXLTestingUtilities
 import HDXLAlgebraicUtilities
 @testable import HDXLSemanticEquivalence

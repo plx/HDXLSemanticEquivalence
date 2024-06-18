@@ -1,10 +1,6 @@
-//
-//  PrioritizedStringDuo.swift
-//
-
 import Foundation
 import XCTest
-import HDXLCommonUtilities
+//import HDXLCommonUtilities
 import HDXLTestingUtilities
 @testable import HDXLSemanticEquivalence
 

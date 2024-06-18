@@ -1,9 +1,5 @@
-//
-//  SemanticEquivalenceTableEntry.swift
-//
-
 import Foundation
-import HDXLCommonUtilities
+//import HDXLCommonUtilities
 
 // -------------------------------------------------------------------------- //
 // MARK: SemanticEquivalenceTableEntry - Definition
@@ -60,7 +56,7 @@ internal struct SemanticEquivalenceTableEntry<Element:SemanticEquivalenceClassId
   @inlinable
   internal init(referenceElement: Element) {
     // /////////////////////////////////////////////////////////////////////////
-    defer { pedantic_assert(self.isValid) }
+    defer { pedantic_assert(isValid) }
     // /////////////////////////////////////////////////////////////////////////
     self.semanticEquivalenceClassIdentifier = referenceElement.semanticEquivalenceClassIdentifier
     self.equivalenceClasses = [
@@ -76,19 +72,17 @@ internal struct SemanticEquivalenceTableEntry<Element:SemanticEquivalenceClassId
 // MARK: SemanticEquivalenceTableEntry - Validatable
 // -------------------------------------------------------------------------- //
 
-extension SemanticEquivalenceTableEntry : Validatable {
+extension SemanticEquivalenceTableEntry {
   
   @inlinable
   internal var isValid: Bool {
-    get {
-      guard
-        !self.equivalenceClasses.isEmpty,
-        self.equivalenceClasses.allElementsAreValidOrIndifferent,
-        self.equivalenceClasses.allSatisfy({$0.semanticEquivalenceClassIdentifier == self.semanticEquivalenceClassIdentifier}) else {
-        return false
-      }
-      return true
+    guard
+      !equivalenceClasses.isEmpty,
+      equivalenceClasses.allElementsAreValidOrIndifferent,
+      equivalenceClasses.allSatisfy({$0.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier}) else {
+      return false
     }
+    return true
   }
   
 }
@@ -102,10 +96,10 @@ internal extension SemanticEquivalenceTableEntry {
   /// `true` iff any equivalence class in `self` contains `element`.
   @inlinable
   func contains(element: Element) -> Bool {
-    guard element.semanticEquivalenceClassIdentifier == self.semanticEquivalenceClassIdentifier else {
+    guard element.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier else {
       return false
     }
-    for equivalenceClass in self.equivalenceClasses where equivalenceClass.contains(element: element) {
+    for equivalenceClass in equivalenceClasses where equivalenceClass.contains(element: element) {
       return true
     }
     return false
@@ -115,10 +109,10 @@ internal extension SemanticEquivalenceTableEntry {
   /// `nil` if no such element can be found.
   @inlinable
   func referenceElement(forElement element: Element) -> Element? {
-    guard element.semanticEquivalenceClassIdentifier == self.semanticEquivalenceClassIdentifier else {
+    guard element.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier else {
       return nil
     }
-    for equivalenceClass in self.equivalenceClasses where equivalenceClass.contains(element: element) {
+    for equivalenceClass in equivalenceClasses where equivalenceClass.contains(element: element) {
       return equivalenceClass.referenceElement
     }
     return nil
@@ -126,10 +120,10 @@ internal extension SemanticEquivalenceTableEntry {
   
   @inlinable
   func equivalenceClass(forElement element: Element) -> EquivalenceClass? {
-    guard element.semanticEquivalenceClassIdentifier == self.semanticEquivalenceClassIdentifier else {
+    guard element.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier else {
       return nil
     }
-    for equivalenceClass in self.equivalenceClasses where equivalenceClass.contains(element: element) {
+    for equivalenceClass in equivalenceClasses where equivalenceClass.contains(element: element) {
       return equivalenceClass
     }
     return nil
@@ -139,17 +133,17 @@ internal extension SemanticEquivalenceTableEntry {
   /// equivalence-class or (b) establishing an equivalence class for `self`.
   @inlinable
   mutating func incorporate(element: Element) {
-    precondition(element.semanticEquivalenceClassIdentifier == self.semanticEquivalenceClassIdentifier)
+    precondition(element.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier)
     // /////////////////////////////////////////////////////////////////////////
-    pedantic_assert(self.isValid)
-    defer { pedantic_assert(self.isValid) }
+    pedantic_assert(isValid)
+    defer { pedantic_assert(isValid) }
     // /////////////////////////////////////////////////////////////////////////
-    if let indexOfExistingIndexClass = self.equivalenceClasses.firstIndex(where: {$0.shouldInclude(element: element)}) {
-      self.equivalenceClasses[indexOfExistingIndexClass].incorporate(
+    if let indexOfExistingIndexClass = equivalenceClasses.firstIndex(where: {$0.shouldInclude(element: element)}) {
+      equivalenceClasses[indexOfExistingIndexClass].incorporate(
         element: element
       )
     } else {
-      self.equivalenceClasses.append(
+      equivalenceClasses.append(
         EquivalenceClass(
           referenceElement: element
         )
@@ -160,13 +154,13 @@ internal extension SemanticEquivalenceTableEntry {
   /// Incorporates `element`, but only if it is a member of an already-known equivalence class.
   @inlinable
   mutating func weaklyIncorporate(element: Element) {
-    precondition(element.semanticEquivalenceClassIdentifier == self.semanticEquivalenceClassIdentifier)
+    precondition(element.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier)
     // /////////////////////////////////////////////////////////////////////////
-    pedantic_assert(self.isValid)
-    defer { pedantic_assert(self.isValid) }
+    pedantic_assert(isValid)
+    defer { pedantic_assert(isValid) }
     // /////////////////////////////////////////////////////////////////////////
-    if let indexOfExistingIndexClass = self.equivalenceClasses.firstIndex(where: {$0.shouldInclude(element: element)}) {
-      self.equivalenceClasses[indexOfExistingIndexClass].incorporate(
+    if let indexOfExistingIndexClass = equivalenceClasses.firstIndex(where: {$0.shouldInclude(element: element)}) {
+      equivalenceClasses[indexOfExistingIndexClass].incorporate(
         element: element
       )
     }
@@ -181,15 +175,17 @@ internal extension SemanticEquivalenceTableEntry {
   /// - todo: Change to a purpose-specific `keep/remove` enumeration instead of `Bool`.
   ///
   @inlinable
-  mutating func unsafe_removeEquivalenceClassesSatisfying(predicate: (EquivalenceClass) -> Bool) -> Bool {
+  mutating func unsafe_removeEquivalenceClassesSatisfying(
+    predicate: (EquivalenceClass) throws -> Bool
+  ) rethrows -> Bool {
     // /////////////////////////////////////////////////////////////////////////
-    pedantic_assert(self.isValid)
-    // note: *unsafe* thus don't *want* any matching `defer{pedantic_assert(self.isValid)}`
+    pedantic_assert(isValid)
+    // note: *unsafe* thus don't *want* any matching `defer{pedantic_assert(isValid)}`
     // /////////////////////////////////////////////////////////////////////////
-    self.equivalenceClasses.removeAll(
+    try equivalenceClasses.removeAll(
       where: predicate
     )
-    return self.equivalenceClasses.isEmpty
+    return equivalenceClasses.isEmpty
   }
 
   /// Removes entries for any equivalence classes for-which `predicate` evaluates to `false`.
@@ -201,17 +197,19 @@ internal extension SemanticEquivalenceTableEntry {
   /// - todo: Change to a purpose-specific `keep/remove` enumeration instead of `Bool`.
   ///
   @inlinable
-  mutating func unsafe_removeEquivalenceClassesFailing(predicate: (EquivalenceClass) -> Bool) -> Bool {
+  mutating func unsafe_removeEquivalenceClassesFailing(
+    predicate: (EquivalenceClass) throws -> Bool
+  ) rethrows -> Bool {
     // /////////////////////////////////////////////////////////////////////////
-    pedantic_assert(self.isValid)
+    pedantic_assert(isValid)
     // note: *unsafe* thus don't *want* any matching `defer{pedantic_assert(self.isValid)}`
     // /////////////////////////////////////////////////////////////////////////
-    self.equivalenceClasses.removeAll(
+    try equivalenceClasses.removeAll(
       where: {
-        !predicate($0)
+        !(try predicate($0))
       }
     )
-    return self.equivalenceClasses.isEmpty
+    return equivalenceClasses.isEmpty
   }
 
 }
@@ -226,10 +224,10 @@ internal extension SemanticEquivalenceTableEntry where Element:AnyObject {
   /// Disjointness-checking vis-a-vis a set-of-objects.
   @inlinable
   func isDisjoint(with elements: ObjectSet<Element>) -> Bool {
-    guard !self.equivalenceClasses.isEmpty else {
+    guard !equivalenceClasses.isEmpty else {
       return true
     }
-    return self.equivalenceClasses.allSatisfy() {
+    return equivalenceClasses.allSatisfy() {
       $0.isDisjoint(with: elements)
     }
   }
@@ -265,14 +263,14 @@ internal extension SemanticEquivalenceTableEntry where Element:AnyObject {
   @inlinable
   mutating func unsafe_prune(preservingOnlyThoseIntersecting relevantElements: ObjectSet<Element>) -> Bool {
     // /////////////////////////////////////////////////////////////////////////
-    pedantic_assert(self.isValid)
-    // note: *unsafe* thus don't *want* any matching `defer{pedantic_assert(self.isValid)}`
+    pedantic_assert(isValid)
+    // note: *unsafe* thus don't *want* any matching `defer{pedantic_assert(isValid)}`
     // /////////////////////////////////////////////////////////////////////////
     guard !relevantElements.isEmpty else {
-      self.equivalenceClasses.removeAll()
+      equivalenceClasses.removeAll()
       return true
     }
-    return self.unsafe_removeEquivalenceClassesSatisfying() {
+    return unsafe_removeEquivalenceClassesSatisfying() {
       return $0.isDisjoint(with: relevantElements)
     }
   }
