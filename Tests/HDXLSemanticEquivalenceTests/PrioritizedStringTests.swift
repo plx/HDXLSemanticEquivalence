@@ -1,204 +1,100 @@
 import Foundation
-import XCTest
-//import HDXLCommonUtilities
-import HDXLTestingUtilities
-import HDXLAlgebraicUtilities
+import Testing
 @testable import HDXLSemanticEquivalence
 
-class PrioritizedStringTests: XCTestCase {
+extension PrioritizedString {
   
-  func testBasicSemantics() {
-    self.haltingOnFirstError {
-      let foo1a = PrioritizedString(
-        label: "foo",
-        priority: 1
-      )
-      let foo1b = PrioritizedString(
-        label: "foo",
-        priority: 1
-      )
-      let foo2a = PrioritizedString(
-        label: "foo",
-        priority: 2
-      )
-      let foo2b = PrioritizedString(
-        label: "foo",
-        priority: 2
-      )
-      
-      let bar1a = PrioritizedString(
-        label: "bar",
-        priority: 1
-      )
-      let bar1b = PrioritizedString(
-        label: "bar",
-        priority: 1
-      )
-      let bar2a = PrioritizedString(
-        label: "bar",
-        priority: 2
-      )
-      let bar2b = PrioritizedString(
-        label: "bar",
-        priority: 2
-      )
-      
-      let foos = [foo1a, foo1b, foo2a, foo2b]
-      let bars = [bar1a, bar1b, bar2a, bar2b]
+  fileprivate static let foos: [PrioritizedString] = PrioritizedString.makeExamples(
+    label: "foo",
+    priorities: 1...2,
+    repeatCount: 2
+  )
 
-      for (li,l) in foos.enumerated() {
-        for (ri,r) in foos.enumerated() where ri <= li {
-          XCTAssertTrue(
-            l.hasEquivalentSemantics(to: r)
-          )
-        }
-      }
-      
-      XCTAssertEqual(
-        foo2a,
-        foo2b
-      )
-      XCTAssertEqual(
-        foo1a,
-        foo1b
-      )
-      XCTAssertNotEqual(
-        foo1a,
-        foo2a
-      )
-      XCTAssertNotEqual(
-        foo1a,
-        foo2b
-      )
-      XCTAssertNotEqual(
-        foo1b,
-        foo2a
-      )
-      XCTAssertNotEqual(
-        foo1b,
-        foo2b
-      )
+  fileprivate static let bars: [PrioritizedString] = PrioritizedString.makeExamples(
+    label: "bar",
+    priorities: 1...2,
+    repeatCount: 2
+  )
 
-      XCTAssertEqual(
-        bar2a,
-        bar2b
-      )
-      XCTAssertEqual(
-        bar1a,
-        bar1b
-      )
-      XCTAssertNotEqual(
-        bar1a,
-        bar2a
-      )
-      XCTAssertNotEqual(
-        bar1a,
-        bar2b
-      )
-      XCTAssertNotEqual(
-        bar1b,
-        bar2a
-      )
-      XCTAssertNotEqual(
-        bar1b,
-        bar2b
-      )
-      
-      for (foo,bar) in CartesianProduct(foos,bars).asTuples() {
-        XCTAssertNotEqual(
-          foo,
-          bar
-        )
-      }
-    }
-    
-  }
-
-  func testFavorabilityRelationships() {
-    
-    let foo1a = PrioritizedString(
-      label: "foo",
-      priority: 1
-    )
-    let foo1b = PrioritizedString(
-      label: "foo",
-      priority: 1
-    )
-    let foo2a = PrioritizedString(
-      label: "foo",
-      priority: 2
-    )
-    let foo2b = PrioritizedString(
-      label: "foo",
-      priority: 2
-    )
-
-    let bar1a = PrioritizedString(
-      label: "bar",
-      priority: 1
-    )
-    let bar1b = PrioritizedString(
-      label: "bar",
-      priority: 1
-    )
-    let bar2a = PrioritizedString(
-      label: "bar",
-      priority: 2
-    )
-    let bar2b = PrioritizedString(
-      label: "bar",
-      priority: 2
-    )
-    
-    let foos = [foo1a, foo1b, foo2a, foo2b]
-    let bars = [bar1a, bar1b, bar2a, bar2b]
-    
-    XCTAssertTrue(
-      foo2a.shouldBeFavored(over: foo1a)
-    )
-    XCTAssertTrue(
-      foo2b.shouldBeFavored(over: foo1a)
-    )
-    XCTAssertTrue(
-      foo2a.shouldBeFavored(over: foo1b)
-    )
-    XCTAssertTrue(
-      foo2b.shouldBeFavored(over: foo1b)
-    )
-
-    XCTAssertFalse(
-      foo2a.shouldBeFavored(over: foo2a)
-    )
-    XCTAssertFalse(
-      foo2b.shouldBeFavored(over: foo2a)
-    )
-    XCTAssertFalse(
-      foo2a.shouldBeFavored(over: foo2b)
-    )
-    XCTAssertFalse(
-      foo2b.shouldBeFavored(over: foo2b)
-    )
-
-    XCTAssertFalse(
-      foo1a.shouldBeFavored(over: foo2a)
-    )
-    XCTAssertFalse(
-      foo1b.shouldBeFavored(over: foo2a)
-    )
-    XCTAssertFalse(
-      foo1a.shouldBeFavored(over: foo2b)
-    )
-    XCTAssertFalse(
-      foo1b.shouldBeFavored(over: foo2b)
-    )
-
-    for (foo,bar) in CartesianProduct(foos, bars).asTuples() {
-      XCTAssertEqual(
-        SemanticEquivalenceComparisonResult.distinct,
-        foo <~> bar
-      )
-    }
-
-  }
-
+  static let examples: [PrioritizedString] = PrioritizedString.foos + PrioritizedString.bars
+  
 }
+
+
+@Test("`PrioritizedString.examples` self-equal and self-equivalent")
+func prioritzedStringExamplesSelfEqualAndSelfEquivalent() {
+  let examples = PrioritizedString.examples
+  for example in examples {
+    #expect(example == example)
+    #expect(example.hasEquivalentSemantics(to: example))
+    #expect(example.hasIdenticalSemantics(to: example))
+    #expect(!example.shouldBeFavored(over: example))
+  }
+}
+
+@Test("`PrioritizedString.foos` well-constructed")
+func prioritizedFoosWellConstructed() {
+  let foos = uniquePairs(from: PrioritizedString.foos)
+  for (lhs, rhs) in foos {
+    #expect(lhs.label == rhs.label)
+    #expect(
+      (lhs == rhs)
+      ==
+      (lhs.priority == rhs.priority)
+    )
+    #expect(lhs !== rhs)
+    #expect(lhs.hasEquivalentSemantics(to: rhs))
+    #expect(
+      lhs.hasIdenticalSemantics(to: rhs)
+      ==
+      (lhs.priority == rhs.priority)
+    )
+    if lhs.priority < rhs.priority {
+      #expect(rhs.shouldBeFavored(over: lhs))
+      #expect(!lhs.shouldBeFavored(over: rhs))
+    }
+    if lhs.priority > rhs.priority {
+      #expect(lhs.shouldBeFavored(over: rhs))
+      #expect(!rhs.shouldBeFavored(over: lhs))
+    }
+  }
+}
+
+@Test("`PrioritizedString.bars` well-constructed")
+func prioritizedBarsWellConstructed() {
+  let bars = uniquePairs(from: PrioritizedString.bars)
+  for (lhs, rhs) in bars {
+    #expect(lhs.label == rhs.label)
+    #expect(
+      (lhs == rhs)
+      ==
+      (lhs.priority == rhs.priority)
+    )
+    #expect(lhs !== rhs)
+    #expect(lhs.hasEquivalentSemantics(to: rhs))
+    #expect(
+      lhs.hasIdenticalSemantics(to: rhs)
+      ==
+      (lhs.priority == rhs.priority)
+    )
+    if lhs.priority < rhs.priority {
+      #expect(rhs.shouldBeFavored(over: lhs))
+      #expect(!lhs.shouldBeFavored(over: rhs))
+    }
+    if lhs.priority > rhs.priority {
+      #expect(lhs.shouldBeFavored(over: rhs))
+      #expect(!rhs.shouldBeFavored(over: lhs))
+    }
+  }
+}
+
+@Test("`PrioritizedString.foos` and `PrioritizedString.bars` are distinct")
+func prioritizedFoosNotEqualToBars() {
+  for (foo, bar) in cartesianProduct(PrioritizedString.foos, PrioritizedString.bars) {
+    #expect(foo != bar)
+    #expect(!foo.hasEquivalentSemantics(to: bar))
+    #expect(!foo.hasIdenticalSemantics(to: bar))
+    #expect(foo.semanticEquivalenceRelationship(with: bar) == .distinct)
+  }
+}
+

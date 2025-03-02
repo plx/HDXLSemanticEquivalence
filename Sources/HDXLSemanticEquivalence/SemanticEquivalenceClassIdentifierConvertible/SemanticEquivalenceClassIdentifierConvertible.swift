@@ -25,7 +25,7 @@ import Foundation
 /// would be easier to get correct than, say, getting consistent strings out of
 /// some combination of the values.
 /// 
-public protocol SemanticEquivalenceClassIdentifierConvertible : SemanticEquivalenceComparable {
+public protocol SemanticEquivalenceClassIdentifierConvertible<SemanticEquivalenceClassIdentifier> : SemanticEquivalenceComparable {
 
   /// The type of the equivalence-class identifier.
   associatedtype SemanticEquivalenceClassIdentifier: Hashable

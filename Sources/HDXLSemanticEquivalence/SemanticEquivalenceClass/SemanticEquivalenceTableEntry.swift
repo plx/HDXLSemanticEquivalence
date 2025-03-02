@@ -1,5 +1,4 @@
 import Foundation
-//import HDXLCommonUtilities
 
 // -------------------------------------------------------------------------- //
 // MARK: SemanticEquivalenceTableEntry - Definition
@@ -55,9 +54,9 @@ internal struct SemanticEquivalenceTableEntry<Element:SemanticEquivalenceClassId
   
   @inlinable
   internal init(referenceElement: Element) {
-    // /////////////////////////////////////////////////////////////////////////
+#if HEAVY_DEBUG
     defer { pedantic_assert(isValid) }
-    // /////////////////////////////////////////////////////////////////////////
+#endif
     self.semanticEquivalenceClassIdentifier = referenceElement.semanticEquivalenceClassIdentifier
     self.equivalenceClasses = [
       EquivalenceClass(
@@ -78,8 +77,8 @@ extension SemanticEquivalenceTableEntry {
   internal var isValid: Bool {
     guard
       !equivalenceClasses.isEmpty,
-      equivalenceClasses.allElementsAreValidOrIndifferent,
-      equivalenceClasses.allSatisfy({$0.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier}) else {
+      equivalenceClasses.allSatisfy({$0.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier})
+    else {
       return false
     }
     return true
@@ -91,11 +90,11 @@ extension SemanticEquivalenceTableEntry {
 // MARK: SemanticEquivalenceTableEntry - Support
 // -------------------------------------------------------------------------- //
 
-internal extension SemanticEquivalenceTableEntry {
+extension SemanticEquivalenceTableEntry {
   
   /// `true` iff any equivalence class in `self` contains `element`.
   @inlinable
-  func contains(element: Element) -> Bool {
+  internal func contains(element: Element) -> Bool {
     guard element.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier else {
       return false
     }
@@ -108,7 +107,7 @@ internal extension SemanticEquivalenceTableEntry {
   /// Returns the reference element of the equivalence class for `element`, or
   /// `nil` if no such element can be found.
   @inlinable
-  func referenceElement(forElement element: Element) -> Element? {
+  internal func referenceElement(forElement element: Element) -> Element? {
     guard element.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier else {
       return nil
     }
@@ -119,7 +118,7 @@ internal extension SemanticEquivalenceTableEntry {
   }
   
   @inlinable
-  func equivalenceClass(forElement element: Element) -> EquivalenceClass? {
+  internal func equivalenceClass(forElement element: Element) -> EquivalenceClass? {
     guard element.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier else {
       return nil
     }
@@ -132,12 +131,12 @@ internal extension SemanticEquivalenceTableEntry {
   /// Incorporates `element` into `self`, by either (a) adding it to a pre-existing
   /// equivalence-class or (b) establishing an equivalence class for `self`.
   @inlinable
-  mutating func incorporate(element: Element) {
+  internal mutating func incorporate(element: Element) {
     precondition(element.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier)
-    // /////////////////////////////////////////////////////////////////////////
+#if HEAVY_DEBUG
     pedantic_assert(isValid)
     defer { pedantic_assert(isValid) }
-    // /////////////////////////////////////////////////////////////////////////
+#endif
     if let indexOfExistingIndexClass = equivalenceClasses.firstIndex(where: {$0.shouldInclude(element: element)}) {
       equivalenceClasses[indexOfExistingIndexClass].incorporate(
         element: element
@@ -155,10 +154,10 @@ internal extension SemanticEquivalenceTableEntry {
   @inlinable
   mutating func weaklyIncorporate(element: Element) {
     precondition(element.semanticEquivalenceClassIdentifier == semanticEquivalenceClassIdentifier)
-    // /////////////////////////////////////////////////////////////////////////
+#if HEAVY_DEBUG
     pedantic_assert(isValid)
     defer { pedantic_assert(isValid) }
-    // /////////////////////////////////////////////////////////////////////////
+#endif
     if let indexOfExistingIndexClass = equivalenceClasses.firstIndex(where: {$0.shouldInclude(element: element)}) {
       equivalenceClasses[indexOfExistingIndexClass].incorporate(
         element: element
@@ -178,10 +177,10 @@ internal extension SemanticEquivalenceTableEntry {
   mutating func unsafe_removeEquivalenceClassesSatisfying(
     predicate: (EquivalenceClass) throws -> Bool
   ) rethrows -> Bool {
-    // /////////////////////////////////////////////////////////////////////////
+#if HEAVY_DEBUG
     pedantic_assert(isValid)
-    // note: *unsafe* thus don't *want* any matching `defer{pedantic_assert(isValid)}`
-    // /////////////////////////////////////////////////////////////////////////
+    // note: *unsafe* thus don't *want* any matching `defer{pedantic_assert(self.isValid)}`
+#endif
     try equivalenceClasses.removeAll(
       where: predicate
     )
@@ -200,10 +199,10 @@ internal extension SemanticEquivalenceTableEntry {
   mutating func unsafe_removeEquivalenceClassesFailing(
     predicate: (EquivalenceClass) throws -> Bool
   ) rethrows -> Bool {
-    // /////////////////////////////////////////////////////////////////////////
+#if HEAVY_DEBUG
     pedantic_assert(isValid)
     // note: *unsafe* thus don't *want* any matching `defer{pedantic_assert(self.isValid)}`
-    // /////////////////////////////////////////////////////////////////////////
+#endif
     try equivalenceClasses.removeAll(
       where: {
         !(try predicate($0))
@@ -214,65 +213,3 @@ internal extension SemanticEquivalenceTableEntry {
 
 }
 
-
-// -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceTableEntry - Support - Objects
-// -------------------------------------------------------------------------- //
-
-internal extension SemanticEquivalenceTableEntry where Element:AnyObject {
-
-  /// Disjointness-checking vis-a-vis a set-of-objects.
-  @inlinable
-  func isDisjoint(with elements: ObjectSet<Element>) -> Bool {
-    guard !equivalenceClasses.isEmpty else {
-      return true
-    }
-    return equivalenceClasses.allSatisfy() {
-      $0.isDisjoint(with: elements)
-    }
-  }
-
-  /// Removes entries for any equivalence classes that are disjoint from the *object set* `relevantElements`.
-  ///
-  /// In other words, if you start with equivalence classes `A`, `B`, and `C`,
-  /// with members like `[a1, a2, ..., am]`, `[b1, b2, ... , bn]`, and `[c1, c2, ..., ck]`,
-  /// with `relevantElements` like `[b1, d2]`, the result of this call will be:
-  ///
-  /// - `A` is discarded b/c it is disjoint-with `relevantElements`
-  /// - `B` is preserved as-is (b/c it has `b1` in-common-with `relevantElements`)
-  /// - `C` is discarded b/c it is disjoint-with `relevantElements`
-  ///
-  /// The point I'm trying to make, in other words, is that we keep-or-discard
-  /// equivalence classes, but we don't *modify their contents*.
-  ///
-  /// The reason this exists, incidentally, is that e.g. when working with `CoreData`
-  /// the sequence of operations can look like this:
-  ///
-  ///   1. get a "change digest" providing a set of modified objects (inserted/updated/deleted, etc.)
-  ///   2. extract the set of equivalence-class *identifiers* from that modified-object set
-  ///   3. fetch *all objects* with identifiers from that set of "relevant identifiers"
-  ///   4. build an equivalence table for all of those fetched objects
-  ///   5. strip out any equivalence classes that have zero overlap with the objects from step (1)
-  ///
-  /// ...with step (5) motivated by potential over-fetching in (4), and this method
-  /// existing *in support* of step (4).
-  ///
-  /// - note: Use of `ObjectSet` is a deliberate belt-and-suspenders decision, here; the *premise* of the semantic-equivalence system is "elements that are `!=` but still *equivalent*". `Set<Element>` thus should work, too, but I'm just playing it extra-safe, here.
-  /// - warning: When `true` is returned, you must immediately either (a) discard this entry or (b) repopulate the entry; entries *cannot* be empty once "at rest".
-  ///
-  @inlinable
-  mutating func unsafe_prune(preservingOnlyThoseIntersecting relevantElements: ObjectSet<Element>) -> Bool {
-    // /////////////////////////////////////////////////////////////////////////
-    pedantic_assert(isValid)
-    // note: *unsafe* thus don't *want* any matching `defer{pedantic_assert(isValid)}`
-    // /////////////////////////////////////////////////////////////////////////
-    guard !relevantElements.isEmpty else {
-      equivalenceClasses.removeAll()
-      return true
-    }
-    return unsafe_removeEquivalenceClassesSatisfying() {
-      return $0.isDisjoint(with: relevantElements)
-    }
-  }
-
-}

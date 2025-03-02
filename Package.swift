@@ -18,38 +18,27 @@ let package = Package(
       targets: ["HDXLSemanticEquivalence"]),
   ],
   dependencies: [
-    .package(
-      url: "https://github.com/plx/HDXLCommonUtilities",
-      from: "0.0.40"
-    ),
-    .package(
-      url: "https://github.com/plx/HDXLAlgebraicUtilities",
-      from: "0.0.3"
-    ),
-    .package(
-      url: "https://github.com/plx/HDXLTestingUtilities",
-      from: "0.0.6"
-    )
   ],
   targets: [
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
     // Targets can depend on other targets in this package, and on products in packages which this package depends on.
     .target(
       name: "HDXLSemanticEquivalence",
-      dependencies: [
-        "HDXLCommonUtilities",
-        "HDXLAlgebraicUtilities"
-    ]),
+      dependencies: [],
+      swiftSettings: [
+        .define(
+          "HEAVY_DEBUG",
+          .when(configuration: .debug)
+        )
+      ]
+    ),
     .testTarget(
       name: "HDXLSemanticEquivalenceTests",
       dependencies: [
-        "HDXLSemanticEquivalence",
-        "HDXLCommonUtilities",
-        "HDXLAlgebraicUtilities",
-        "HDXLTestingUtilities"
+        "HDXLSemanticEquivalence"
     ])
   ],
-  swiftLanguageVersions: [
+  swiftLanguageModes: [
     .v6
   ]
 )

@@ -5,9 +5,6 @@ import Foundation
 // -------------------------------------------------------------------------- //
 
 /// Operator analogous to `<=>`, but for use with `SemanticEquivalenceComparable`.
-///
-/// - note: Will need to search for operators (how?) and make sure this isn't in widespread use already.
-///
 infix operator <~> : ComparisonPrecedence
 
 // -------------------------------------------------------------------------- //

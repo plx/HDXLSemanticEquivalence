@@ -1,6 +1,4 @@
 import Foundation
-//import HDXLCommonUtilities
-import HDXLAlgebraicUtilities
 
 // -------------------------------------------------------------------------- //
 // MARK: SemanticEquivalenceClass - Definition
@@ -19,7 +17,9 @@ import HDXLAlgebraicUtilities
 /// I don't see a way to expose them usefully (and they're rather special-purpose
 /// vis-a-vis use with `SemanticEquivalenceTable`). That could change, someday.
 ///
-public struct SemanticEquivalenceClass<Element:SemanticEquivalenceClassIdentifierConvertible> {
+public struct SemanticEquivalenceClass<Element>
+where Element: SemanticEquivalenceClassIdentifierConvertible
+{
 
   public typealias Identifier = Element.SemanticEquivalenceClassIdentifier
   
@@ -55,11 +55,23 @@ public struct SemanticEquivalenceClass<Element:SemanticEquivalenceClassIdentifie
   public init(
     referenceElement: Element
   ) {
-    // /////////////////////////////////////////////////////////////////////////
-    defer { pedantic_assert(self.isValid) }
-    // /////////////////////////////////////////////////////////////////////////
+    #if HEAVY_DEBUG
+    defer { pedantic_assert(isValid) }
+    #endif
     self._referenceElement = referenceElement
     self._equivalentElements = []
+  }
+  
+  @inlinable
+  internal init(
+    referenceElement: Element,
+    equivalentElements: [Element]
+  ) {
+#if HEAVY_DEBUG
+    defer { pedantic_assert(isValid) }
+#endif
+    self._referenceElement = referenceElement
+    self._equivalentElements = equivalentElements
   }
   
 }
@@ -125,10 +137,10 @@ extension SemanticEquivalenceClass {
   public func hasDistinctSemantics(
     from equivalenceClass: SemanticEquivalenceClass<Element>
   ) -> Bool {
-    // /////////////////////////////////////////////////////////////////////////
+    #if HEAVY_DEBUG
     pedantic_assert(equivalenceClass.isValid)
     pedantic_assert(isValid)
-    // /////////////////////////////////////////////////////////////////////////
+    #endif
     return !referenceElement.hasEquivalentSemantics(to: equivalenceClass.referenceElement)
   }
   
@@ -139,10 +151,10 @@ extension SemanticEquivalenceClass {
   public func isDisjoint(
     with equivalenceClass: SemanticEquivalenceClass<Element>
   ) -> Bool {
-    // /////////////////////////////////////////////////////////////////////////
+    #if HEAVY_DEBUG
     pedantic_assert(equivalenceClass.isValid)
     pedantic_assert(isValid)
-    // /////////////////////////////////////////////////////////////////////////
+    #endif
     // first pre-flight sanity checks:
     guard
       semanticEquivalenceClassIdentifier == equivalenceClass.semanticEquivalenceClassIdentifier,
@@ -160,7 +172,7 @@ extension SemanticEquivalenceClass {
       return true
     case (false,true):
       // self has alternates, other doesn't, one last check:
-      return !self.equivalentElements.contains(equivalenceClass.referenceElement)
+      return !equivalentElements.contains(equivalenceClass.referenceElement)
     case (true,false):
       // other has alternates, self doesn't, one last check:
       return !equivalenceClass.equivalentElements.contains(referenceElement)
@@ -244,11 +256,11 @@ extension SemanticEquivalenceClass {
   ///
   @inlinable
   internal mutating func incorporate(element: Element) {
-    precondition(self.referenceElement.hasEquivalentSemantics(to: element))
-    // /////////////////////////////////////////////////////////////////////////
+    precondition(referenceElement.hasEquivalentSemantics(to: element))
+    #if HEAVY_DEBUG
     pedantic_assert(isValid)
     defer { pedantic_assert(isValid) }
-    // /////////////////////////////////////////////////////////////////////////
+    #endif
     guard !contains(element: element) else {
       return
     }
@@ -271,10 +283,10 @@ extension SemanticEquivalenceClass {
   /// "Safely incorporate" an `element` that may or may not actually-belong in `self`.
   @inlinable
   public mutating func weaklyIncorporate(element: Element) {
-    // /////////////////////////////////////////////////////////////////////////
+    #if HEAVY_DEBUG
     pedantic_assert(isValid)
     defer { pedantic_assert(isValid) }
-    // /////////////////////////////////////////////////////////////////////////
+    #endif
     if shouldInclude(element: element) {
       incorporate(element:
         element
@@ -285,10 +297,10 @@ extension SemanticEquivalenceClass {
   /// "Safely incorporate" `elements` that may or may not actually-belong in `self`.
   @inlinable
   public mutating func weaklyIncorporate(elements: some Sequence<Element>) {
-    // ///////////////////////////////////////////////////////////////////////
+    #if HEAVY_DEBUG
     pedantic_assert(isValid)
     defer { pedantic_assert(isValid) }
-    // ///////////////////////////////////////////////////////////////////////
+    #endif
     for element in elements {
       weaklyIncorporate(
         element: element
@@ -299,39 +311,14 @@ extension SemanticEquivalenceClass {
 }
 
 // -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceClass - Support - Objects
-// -------------------------------------------------------------------------- //
-
-extension SemanticEquivalenceClass where Element:AnyObject {
-  
-  /// Returns `true` iff `self` is disjoint with the *objects* contained in `objects`.
-  ///
-  /// - note: Special case for objects; motivated for use with `CoreData`.
-  ///
-  @inlinable
-  internal func isDisjoint(with objects: ObjectSet<Element>) -> Bool {
-    guard
-      !objects.contains(referenceElement),
-      objects.isDisjoint(with: equivalentElements)
-    else {
-      return false
-    }
-    return true
-  }
-  
-}
-
-// -------------------------------------------------------------------------- //
 // MARK: SemanticEquivalenceClass - Validatable
 // -------------------------------------------------------------------------- //
 
 extension SemanticEquivalenceClass {
   
-  @inlinable
-  public var isValid: Bool {
+  @usableFromInline
+  internal var isValid: Bool {
     guard
-      isValidOrIndifferent(referenceElement),
-      equivalentElements.allElementsAreValidOrIndifferent,
       !equivalentElements.contains(referenceElement),
       equivalentElements.allSatisfy({referenceElement.semanticEquivalenceClassIdentifier == $0.semanticEquivalenceClassIdentifier}),
       equivalentElements.allSatisfy({referenceElement.hasEquivalentSemantics(to: $0)}),
@@ -345,7 +332,7 @@ extension SemanticEquivalenceClass {
   
   /// This is an O(n^2) algorithm *but that's ok* b/c (a) we only use it (much)
   /// in heavy debug builds and (b) we want to find the errors it catches!
-  @inlinable
+  @usableFromInline
   internal func hasMaintainedPreferenceOrdering() -> Bool {
     guard equivalentElements.count >= 2 else {
       return true
@@ -410,7 +397,12 @@ extension SemanticEquivalenceClass : CustomDebugStringConvertible {
   
   @inlinable
   public var debugDescription: String {
-    "SemanticEquivalenceClass<\(String(reflecting: Element.self))>(referenceElement: \(String(reflecting: referenceElement)), equivalentElements: \(equivalentElements.arrayLikeElementDebugDescriptions()))"
+    let elementDebugDescriptions = equivalentElements
+      .lazy
+      .map { String(reflecting: $0) }
+      .joined(separator: ", ")
+    
+    return "SemanticEquivalenceClass<\(String(reflecting: Element.self))>(referenceElement: \(String(reflecting: referenceElement)), equivalentElements: [ \(elementDebugDescriptions) ])"
   }
   
 }
@@ -420,18 +412,16 @@ extension SemanticEquivalenceClass : CustomDebugStringConvertible {
 // -------------------------------------------------------------------------- //
 
 extension SemanticEquivalenceClass {
-  
-  public typealias Elements = Chain2Collection<[Element],CollectionOfOne<Element>>
-  
+    
   /// Returns all elements in `self`, arranged least-to-most favored.
   ///
   /// - todo: use `some Collection` once I can suitably constrain with a `where` clause.
   @inlinable
-  public var equivalenceClassElements: Elements {
-    Chain2Collection<[Element],CollectionOfOne<Element>>(
-      equivalentElements,
-      CollectionOfOne<Element>(referenceElement)
-    )
+  public var equivalenceClassElements: some Collection<Element> {
+    // TODO: consider dropping in a "caboose-collection" use once collections library is revamped
+    var result = equivalentElements
+    result.append(referenceElement)
+    return result
   }
    
 }

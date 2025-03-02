@@ -1,22 +1,15 @@
 import Foundation
 import XCTest
-//import /*HDXLCommonUtilities*/
-import HDXLTestingUtilities
 @testable import HDXLSemanticEquivalence
 
 /// Dummy class for testing the semantic-equivalence system: `label` determines
 /// *semantics* and then `priority` determines favorability (with higher `priority`
 /// corresponding to being more-favored).
-@usableFromInline
-internal final class PrioritizedString {
+internal final class PrioritizedString: @unchecked Sendable {
   
-  @usableFromInline
   let label: String
-  
-  @usableFromInline
   let priority: Int
   
-  @inlinable
   init(label: String, priority: Int) {
     self.label = label
     self.priority = priority
@@ -26,31 +19,32 @@ internal final class PrioritizedString {
 
 internal extension PrioritizedString {
   
-  @inlinable
   func with(
-    label: String,
-    ensureUniqueCopy: Bool = true) -> PrioritizedString {
+    label newLabel: String,
+    ensureUniqueCopy: Bool = true
+  ) -> PrioritizedString {
     guard
-      ensureUniqueCopy || label != self.label else {
+      ensureUniqueCopy || newLabel != label else {
+        return self
+    }
+    return PrioritizedString(
+      label: newLabel,
+      priority: priority
+    )
+  }
+
+  func with(
+    priority newPriority: Int,
+    ensureUniqueCopy: Bool = true
+  ) -> PrioritizedString {
+    guard
+      ensureUniqueCopy || newPriority != priority
+    else {
         return self
     }
     return PrioritizedString(
       label: label,
-      priority: self.priority
-    )
-  }
-
-  @inlinable
-  func with(
-    priority: Int,
-    ensureUniqueCopy: Bool = true) -> PrioritizedString {
-    guard
-      ensureUniqueCopy || priority != self.priority else {
-        return self
-    }
-    return PrioritizedString(
-      label: self.label,
-      priority: priority
+      priority: newPriority
     )
   }
 
@@ -58,17 +52,18 @@ internal extension PrioritizedString {
 
 extension PrioritizedString : Equatable {
   
-  @inlinable
   internal static func ==(
     lhs: PrioritizedString,
-    rhs: PrioritizedString) -> Bool {
+    rhs: PrioritizedString
+  ) -> Bool {
     guard lhs !== rhs else {
       return true
     }
     guard
       lhs.label == rhs.label,
-      lhs.priority == rhs.priority else {
-        return false
+      lhs.priority == rhs.priority
+    else {
+      return false
     }
     return true
   }
@@ -77,55 +72,48 @@ extension PrioritizedString : Equatable {
 
 extension PrioritizedString : Hashable {
   
-  @inlinable
   internal func hash(into hasher: inout Hasher) {
-    self.label.hash(into: &hasher)
-    self.priority.hash(into: &hasher)
+    label.hash(into: &hasher)
+    priority.hash(into: &hasher)
   }
 
 }
 
 extension PrioritizedString : CustomStringConvertible {
   
-  @inlinable
   internal var description: String {
-    get {
-      return "'\(self.label)' @ \(self.priority)"
-    }
+    "'\(label)' @ \(priority)"
   }
   
 }
 
 extension PrioritizedString : CustomDebugStringConvertible {
   
-  @inlinable
   internal var debugDescription: String {
-    get {
-      return "PrioritizedString(label: '\(self.label)', priority: \(self.priority))"
-    }
+    "PrioritizedString(label: '\(label)', priority: \(priority))"
   }
   
 }
 
 extension PrioritizedString : SemanticEquivalenceComparable {
   
-  @inlinable
   internal static func <~> (
     lhs: PrioritizedString,
-    rhs: PrioritizedString) -> SemanticEquivalenceComparisonResult {
+    rhs: PrioritizedString
+  ) -> SemanticEquivalenceComparisonResult {
     guard lhs !== rhs else {
       return .identical
     }
     guard lhs.label == rhs.label else {
       return .distinct
     }
-    switch lhs.priority <=> rhs.priority {
-    case .orderedAscending:
-      return .equivalentPreferRHS
-    case .orderedSame:
-      return .identical
-    case .orderedDescending:
-      return .equivalentPreferLHS
+    
+    return if lhs.priority < rhs.priority {
+      .equivalentPreferRHS
+    } else if lhs.priority > rhs.priority {
+      .equivalentPreferLHS
+    } else {
+      .identical
     }
   }
   
@@ -133,14 +121,53 @@ extension PrioritizedString : SemanticEquivalenceComparable {
 
 extension PrioritizedString : SemanticEquivalenceClassIdentifierConvertible {
   
-  @usableFromInline
   internal typealias SemanticEquivalenceClassIdentifier = String
   
-  @inlinable
   internal var semanticEquivalenceClassIdentifier: String {
-    get {
-      return self.label
-    }
+    label
   }
   
+}
+
+extension PrioritizedString {
+
+  static func makeExamples(
+    label: String,
+    priorities: some Collection<Int>,
+    repeatCount: Int = 1
+  ) -> [PrioritizedString] {
+    makeExamples(
+      labels: CollectionOfOne(label),
+      priorities: priorities,
+      repeatCount: repeatCount
+    )
+  }
+
+  static func makeExamples(
+    labels: some Collection<String>,
+    priorities: some Collection<Int>,
+    repeatCount: Int = 1
+  ) -> [PrioritizedString] {
+    var result: [PrioritizedString] = []
+    result.reserveCapacity(
+      labels.count
+      *
+      priorities.count
+    )
+    
+    for label in labels {
+      for priority in priorities {
+        for _ in 0..<repeatCount {
+          result.append(
+            PrioritizedString(
+              label: label,
+              priority: priority
+            )
+          )
+        }
+      }
+    }
+    
+    return result
+  }
 }
