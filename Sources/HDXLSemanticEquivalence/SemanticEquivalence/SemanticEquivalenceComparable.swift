@@ -135,7 +135,7 @@ infix operator <~> : ComparisonPrecedence
 /// and--in this case--a `Tag` class that provided an implementation of that method
 /// could jump directly to comparing the `UUID` values, bypassing the rest of the comparisons.
 ///
-public protocol SemanticEquivalenceComparable : Equatable {
+public protocol SemanticEquivalenceComparable /*: Equatable*/ {
 
   /// Determine the semantic equivalance between `lhs` and `rhs`; are they:
   ///
@@ -152,7 +152,7 @@ public protocol SemanticEquivalenceComparable : Equatable {
   /// - note: Like `<=>` the operator is visually-symmetric but the results are--necessarily!--sensitive to the ordering of the arguments.
   ///
   static func <~> (lhs: Self, rhs: Self) -> SemanticEquivalenceComparisonResult
-  
+
   /// Check for semantic relationship (and *only* semantic relationship).
   ///
   /// *Users* who only need the semantic representation should call this just-in-case
@@ -164,7 +164,7 @@ public protocol SemanticEquivalenceComparable : Equatable {
   /// - note: Default provided, but performance in some secnmay improve
   ///
   func semanticEquivalenceRelationship(with other: Self) -> SemanticEquivalenceRelationship
-  
+
   /// Check for semantically-identical values (e.g. `.identical`).
   ///
   /// *Users* who only need equivalence should call this just-in-case the type
@@ -184,7 +184,7 @@ public protocol SemanticEquivalenceComparable : Equatable {
   /// but need not do so; in many cases the default implementation will suffice.
   ///
   func hasEquivalentSemantics(to other: Self) -> Bool
-  
+
   /// Check for favorability vis-a-vis `other` (and *only* for favorability).
   ///
   /// Allowed to have GIGO/undefined results when called on `self` and `other`
@@ -197,7 +197,7 @@ public protocol SemanticEquivalenceComparable : Equatable {
   /// but need not do so; in many cases the default implementation will suffice.
   ///
   func shouldBeFavored(over other: Self) -> Bool
-  
+
 }
 
 // -------------------------------------------------------------------------- //
@@ -205,7 +205,7 @@ public protocol SemanticEquivalenceComparable : Equatable {
 // -------------------------------------------------------------------------- //
 
 extension SemanticEquivalenceComparable {
-  
+
   @inlinable
   public func semanticEquivalenceRelationship(
     with other: Self
@@ -221,7 +221,7 @@ extension SemanticEquivalenceComparable {
       .equivalent
     }
   }
-  
+
   @inlinable
   public func hasIdenticalSemantics(to other: Self) -> Bool {
     switch self <~> other {
@@ -235,7 +235,7 @@ extension SemanticEquivalenceComparable {
       false
     }
   }
-  
+
   /// Convenience to check whether or not `self` and `other` have semantic
   /// equivalance; this will be true whenever `self == other`, but may also be
   /// true in cases for which `self != other`.
@@ -244,7 +244,7 @@ extension SemanticEquivalenceComparable {
   public func hasEquivalentSemantics(to other: Self) -> Bool {
     (self <~> other).impliesEquivalence
   }
-  
+
   /// Convenience to see if `self` is to be favored over `other`.
   @inlinable
   public func shouldBeFavored(over other: Self) -> Bool {
@@ -259,5 +259,5 @@ extension SemanticEquivalenceComparable {
       false
     }
   }
-  
+
 }

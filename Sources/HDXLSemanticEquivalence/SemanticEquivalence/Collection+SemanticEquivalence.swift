@@ -1,7 +1,7 @@
 import Foundation
 
-extension Collection where Element:SemanticEquivalenceComparable {
-  
+extension Collection where Element: SemanticEquivalenceComparable {
+
   /// `true` iff all elements in `self` have *equivalent* semantics to each other.
   @inlinable
   public func allElementsHaveEquivalentSemantics() -> Bool {
@@ -12,7 +12,7 @@ extension Collection where Element:SemanticEquivalenceComparable {
       firstElement.hasEquivalentSemantics(to: $0)
     }
   }
-  
+
   /// `true` iff all elements in `self` have *equivalent* semantics to `self`.
   @inlinable
   public func allElementsHaveSemantics(equivalentTo element: Element) -> Bool {
@@ -20,5 +20,15 @@ extension Collection where Element:SemanticEquivalenceComparable {
       element.hasEquivalentSemantics(to: $0)
     }
   }
-    
+
+  @inlinable
+  public func containsElementWithSemantics(identicalTo reference: Element) -> Bool {
+    contains(where: { reference.hasIdenticalSemantics(to: $0) })
+  }
+
+  @inlinable
+  public func containsElementWithSemantics(equivalentTo reference: Element) -> Bool {
+    contains(where: { reference.hasIdenticalSemantics(to: $0) })
+  }
+
 }

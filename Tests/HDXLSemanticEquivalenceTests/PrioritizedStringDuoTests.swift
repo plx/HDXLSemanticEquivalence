@@ -1,11 +1,13 @@
 import Foundation
 import Testing
+
 @testable import HDXLSemanticEquivalence
-fileprivate let testDepth: Int = 3
-fileprivate let testPriorities = 0...3
+
+private let testDepth: Int = 3
+private let testPriorities = 0...3
 
 extension PrioritizedStringDuo {
-  
+
   fileprivate static var unorganizedTestValues: some Collection<PrioritizedStringDuo> {
     makeExamples(
       labels: ["foo", "bar", "baz", "quux"],
@@ -14,22 +16,21 @@ extension PrioritizedStringDuo {
       repeatCount: testDepth
     )
   }
-  
+
 }
 
 @Test("`PrioritizedStringDuo` semantics")
 func prioritizedStringDuoSemantics() {
   let unorganizedTestValues = PrioritizedStringDuo.unorganizedTestValues
-  for (x,y) in cartesianProduct(unorganizedTestValues, unorganizedTestValues) {
+  for (x, y) in cartesianProduct(unorganizedTestValues, unorganizedTestValues) {
     #expect(
       x.hasEquivalentSemantics(to: y)
-      ==
-      (x.label == y.label && x.caption == y.caption)
+        == (x.label == y.label && x.caption == y.caption)
     )
     if x.hasEquivalentSemantics(to: y) && x.priority > y.priority {
       #expect(x.shouldBeFavored(over: y))
     }
-    
+
     switch x <~> y {
     case .distinct:
       #expect(x.label != y.label || x.caption != y.caption)

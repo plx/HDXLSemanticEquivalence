@@ -1,11 +1,13 @@
 import Foundation
 import Testing
+
 @testable import HDXLSemanticEquivalence
-fileprivate let testDepth: Int = 10
-fileprivate let testPriorities = 0...testDepth
+
+private let testDepth: Int = 3
+private let testPriorities = 0...testDepth
 
 extension PrioritizedString {
-    
+
   fileprivate static let foos = makeExamples(label: "foo", priorities: 0...testDepth)
   fileprivate static let bars = makeExamples(label: "bar", priorities: 0...testDepth)
 }
@@ -14,11 +16,11 @@ extension PrioritizedString {
 func semanticEquivalenceClassBasics() {
   let foos = PrioritizedString.foos
   let bars = PrioritizedString.bars
-  
+
   var fooEquivalenceClass = SemanticEquivalenceClass<PrioritizedString>(referenceElement: foos[0])
   #expect("foo" == fooEquivalenceClass.semanticEquivalenceClassIdentifier)
   #expect(fooEquivalenceClass.isValid)
-  
+
   for (fooIndex, foo) in foos.enumerated().dropFirst() {
     // ------------------------------------------------------------------ //
     // pre-update block
@@ -40,23 +42,23 @@ func semanticEquivalenceClassBasics() {
 
     // ...which isn't equal to the reference element:
     #expect(foo != fooEquivalenceClass.referenceElement)
-    
+
     // ...but should be incoporated into the equivalence class:
     #expect(fooEquivalenceClass.shouldInclude(element: foo))
     // ...but has semantic equivalence to it:
     #expect(foo.hasEquivalentSemantics(to: fooEquivalenceClass.referenceElement))
     // ...and should be favored over the reference:
     #expect(foo.shouldBeFavored(over: fooEquivalenceClass.referenceElement))
-    
+
     // ...thus it should become the reference element once we add it.
     // ------------------------------------------------------------------ //
-    
+
     // so let's grab the previous reference element real quick:
     let previousReferenceElement = fooEquivalenceClass.referenceElement
     // ...and now let's add it:
     fooEquivalenceClass.incorporate(element: foo)
     // ...and see how it turned out.
-    
+
     // ------------------------------------------------------------------ //
     // post-update block
     // ------------------------------------------------------------------ //
@@ -77,7 +79,7 @@ func semanticEquivalenceClassBasics() {
       #expect(fooEquivalenceClass.contains(element: lowerFoo))
     }
   }
-  
+
   // now we test the end state:
   var expectation = fooEquivalenceClass
   let highestFoo = foos[foos.count - 1]

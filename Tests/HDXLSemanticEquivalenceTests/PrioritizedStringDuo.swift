@@ -1,5 +1,6 @@
 import Foundation
-import XCTest
+import Testing
+
 @testable import HDXLSemanticEquivalence
 
 /// Dummy class for testing the semantic-equivalence system: `label` is used as
@@ -12,21 +13,21 @@ import XCTest
 /// `priority` remains how we determine favorability, with higher `priority`
 /// corresponding to being more-favored.
 internal final class PrioritizedStringDuo: @unchecked Sendable {
-  
+
   let label: String
   let caption: String
   let priority: Int
-  
+
   init(label: String, caption: String, priority: Int) {
     self.label = label
     self.caption = caption
     self.priority = priority
   }
-  
+
 }
 
-internal extension PrioritizedStringDuo {
-  
+extension PrioritizedStringDuo {
+
   func with(
     label newLabel: String,
     ensureUniqueCopy: Bool = true
@@ -62,10 +63,10 @@ internal extension PrioritizedStringDuo {
 
 }
 
-extension PrioritizedStringDuo : Equatable {
-  
+extension PrioritizedStringDuo: Equatable {
+
   @inlinable
-  internal static func ==(
+  internal static func == (
     lhs: PrioritizedStringDuo,
     rhs: PrioritizedStringDuo
   ) -> Bool {
@@ -81,11 +82,11 @@ extension PrioritizedStringDuo : Equatable {
     }
     return true
   }
-  
+
 }
 
-extension PrioritizedStringDuo : Hashable {
-  
+extension PrioritizedStringDuo: Hashable {
+
   internal func hash(into hasher: inout Hasher) {
     label.hash(into: &hasher)
     caption.hash(into: &hasher)
@@ -94,24 +95,31 @@ extension PrioritizedStringDuo : Hashable {
 
 }
 
-extension PrioritizedStringDuo : CustomStringConvertible {
-  
+extension PrioritizedStringDuo: CustomStringConvertible {
+
   internal var description: String {
     "'\(label)': '\(caption)' @ \(priority)"
   }
-  
+
 }
 
-extension PrioritizedStringDuo : CustomDebugStringConvertible {
-  
+extension PrioritizedStringDuo: CustomDebugStringConvertible {
+
   internal var debugDescription: String {
     "PrioritizedStringDuo(label: '\(label)', caption: '\(caption)', priority: \(priority))"
   }
-  
+
 }
 
-extension PrioritizedStringDuo : SemanticEquivalenceComparable {
-  
+extension PrioritizedStringDuo: CustomTestStringConvertible {
+
+  internal var testDescription: String {
+    "(\(label), \(caption)) @ \(priority)"
+  }
+}
+
+extension PrioritizedStringDuo: SemanticEquivalenceComparable {
+
   internal static func <~> (
     lhs: PrioritizedStringDuo,
     rhs: PrioritizedStringDuo
@@ -123,8 +131,8 @@ extension PrioritizedStringDuo : SemanticEquivalenceComparable {
       lhs.label == rhs.label,
       lhs.caption == rhs.caption
     else {
-        // ^ note we only use the label in the identifier,
-        // and have a secondary field that factors into semantic equivalence.
+      // ^ note we only use the label in the identifier,
+      // and have a secondary field that factors into semantic equivalence.
       return .distinct
     }
     return if lhs.priority < rhs.priority {
@@ -135,21 +143,33 @@ extension PrioritizedStringDuo : SemanticEquivalenceComparable {
       .identical
     }
   }
-  
+
 }
 
-extension PrioritizedStringDuo : SemanticEquivalenceClassIdentifierConvertible {
-  
-  internal typealias SemanticEquivalenceClassIdentifier = String
-  
-  internal var semanticEquivalenceClassIdentifier: String {
-    label
-  }
-  
+struct StringPair: Hashable {
+  var label: String
+  var caption: String
 }
+
+extension PrioritizedStringDuo: SemanticItemIdentifiable {
+  internal typealias SemanticItem = StringPair
+  internal typealias EquivalencePriority = Int
+
+  internal var semanticItemIdentifier: SemanticItemIdentifier<StringPair, Int> {
+    SemanticItemIdentifier<StringPair, Int>(
+      semanticItem: StringPair(
+        label: label,
+        caption: caption
+      ),
+      equivalencePriority: priority
+    )
+  }
+}
+
+extension PrioritizedStringDuo: SemanticEquivalenceClassIdentifierProviding {}
 
 extension PrioritizedStringDuo {
-  
+
   static func makeExamples(
     labels: some Collection<String>,
     captions: some Collection<String>,
@@ -159,14 +179,11 @@ extension PrioritizedStringDuo {
     var result: [PrioritizedStringDuo] = []
     result.reserveCapacity(
       labels.count
-      *
-      captions.count
-      *
-      priorities.count
-      *
-      repeatCount
+        * captions.count
+        * priorities.count
+        * repeatCount
     )
-    
+
     for label in labels {
       for caption in captions {
         for priority in priorities {
@@ -182,8 +199,8 @@ extension PrioritizedStringDuo {
         }
       }
     }
-    
+
     return result
   }
-  
+
 }

@@ -1,6 +1,5 @@
-
 @inlinable
-internal func projectedAscendingArrangement<T,V>(
+internal func projectedAscendingArrangement<T, V>(
   _ lhs: T,
   _ rhs: T,
   _ projection: (T) -> V
@@ -14,4 +13,3 @@ internal func projectedAscendingArrangement<T,V>(
     (rhs, lhs)
   }
 }
-

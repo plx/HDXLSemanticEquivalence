@@ -1,9 +1,10 @@
 import Foundation
 import Testing
+
 @testable import HDXLSemanticEquivalence
 
 extension PrioritizedString {
-  
+
   fileprivate static let foos: [PrioritizedString] = PrioritizedString.makeExamples(
     label: "foo",
     priorities: 1...2,
@@ -17,9 +18,8 @@ extension PrioritizedString {
   )
 
   static let examples: [PrioritizedString] = PrioritizedString.foos + PrioritizedString.bars
-  
-}
 
+}
 
 @Test("`PrioritizedString.examples` self-equal and self-equivalent")
 func prioritzedStringExamplesSelfEqualAndSelfEquivalent() {
@@ -39,15 +39,13 @@ func prioritizedFoosWellConstructed() {
     #expect(lhs.label == rhs.label)
     #expect(
       (lhs == rhs)
-      ==
-      (lhs.priority == rhs.priority)
+        == (lhs.priority == rhs.priority)
     )
     #expect(lhs !== rhs)
     #expect(lhs.hasEquivalentSemantics(to: rhs))
     #expect(
       lhs.hasIdenticalSemantics(to: rhs)
-      ==
-      (lhs.priority == rhs.priority)
+        == (lhs.priority == rhs.priority)
     )
     if lhs.priority < rhs.priority {
       #expect(rhs.shouldBeFavored(over: lhs))
@@ -67,15 +65,13 @@ func prioritizedBarsWellConstructed() {
     #expect(lhs.label == rhs.label)
     #expect(
       (lhs == rhs)
-      ==
-      (lhs.priority == rhs.priority)
+        == (lhs.priority == rhs.priority)
     )
     #expect(lhs !== rhs)
     #expect(lhs.hasEquivalentSemantics(to: rhs))
     #expect(
       lhs.hasIdenticalSemantics(to: rhs)
-      ==
-      (lhs.priority == rhs.priority)
+        == (lhs.priority == rhs.priority)
     )
     if lhs.priority < rhs.priority {
       #expect(rhs.shouldBeFavored(over: lhs))
@@ -97,4 +93,3 @@ func prioritizedFoosNotEqualToBars() {
     #expect(foo.semanticEquivalenceRelationship(with: bar) == .distinct)
   }
 }
-

@@ -1,10 +1,10 @@
 import Foundation
 
 // -------------------------------------------------------------------------- //
-// MARK: SemanticEquivalenceClassIdentifierConvertible - Definition
+// MARK: SemanticEquivalenceClassIdentifierProviding - Definition
 // -------------------------------------------------------------------------- //
 
-/// `SemanticEquivalenceClassIdentifierConvertible` can be adopted by types that can provide some
+/// `SemanticEquivalenceClassIdentifierProviding` can be adopted by types that can provide some
 /// sort of a "rich `hashValue`" with the semantics familiar to all hashes:
 ///
 /// - *equivalent* values must have *identical* `semanticDigest` values
@@ -24,16 +24,18 @@ import Foundation
 /// from our data objects; e.g. for a CoreData type a struct equivalent-to `(String,String,URL)`
 /// would be easier to get correct than, say, getting consistent strings out of
 /// some combination of the values.
-/// 
-public protocol SemanticEquivalenceClassIdentifierConvertible<SemanticEquivalenceClassIdentifier> : SemanticEquivalenceComparable {
+///
+public protocol SemanticEquivalenceClassIdentifierProviding<SemanticEquivalenceClassIdentifier>:
+  SemanticEquivalenceComparable /*: SemanticEquivalenceComparable*/
+{
 
   /// The type of the equivalence-class identifier.
   associatedtype SemanticEquivalenceClassIdentifier: Hashable
-  
+
   /// The equivalence-class identifier for `self`.
   ///
   /// - note: Not guaranteed to remain stable between mutations of `self` (should be obvious, but just sayin').
   ///
   var semanticEquivalenceClassIdentifier: SemanticEquivalenceClassIdentifier { get }
-  
+
 }
